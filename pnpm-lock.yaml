@@ -6,6 +6,9 @@ importers:
 
   construct:
     dependencies:
+      '@apimda/npm-layer-version':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@aws-cdk/aws-apigatewayv2-alpha':
         specifier: 2.79.0-alpha.0
         version: 2.79.0-alpha.0(aws-cdk-lib@2.79.0)(constructs@10.2.19)
@@ -97,6 +100,14 @@ importers:
         version: 4.3.0
 
 packages:
+
+  /@apimda/npm-layer-version@1.0.0:
+    resolution: {integrity: sha512-zgytKThT6SlYJZiuEfxcw8yrTBrTJRuFrEkT+QU/ryadF9LW7797hyRZJPTg/COAk8Q8M00gBSnO1+7mb7x7bw==}
+    requiresBuild: true
+    dependencies:
+      aws-cdk-lib: 2.79.0(constructs@10.2.19)
+      constructs: 10.2.19
+    dev: false
 
   /@aws-cdk/asset-awscli-v1@2.2.169:
     resolution: {integrity: sha512-6lsgX4U3DryDNGUsymcyT8V4M7GVjmU6R57cN7Be6tIgINx1OK8Kl1ga/etpXxN1u9zGnxUmoQS7+/Xu+O/sNw==}

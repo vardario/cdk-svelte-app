@@ -8,7 +8,14 @@ import fs from "fs";
 import * as apigw from "@aws-cdk/aws-apigatewayv2-alpha";
 import * as lambdaNode from "aws-cdk-lib/aws-lambda-nodejs";
 import * as apigwInt from "@aws-cdk/aws-apigatewayv2-integrations-alpha";
+import * as cfo from "aws-cdk-lib/aws-cloudfront-origins";
+import * as cf from "aws-cdk-lib/aws-cloudfront";
+import * as cm from "aws-cdk-lib/aws-certificatemanager";
+import * as r53t from "aws-cdk-lib/aws-route53-targets";
+import { NpmLayerVersion } from "@apimda/npm-layer-version";
+
 import {
+  LAMBDA_ARCHITECTURE,
   LAMBDA_ESBUILD_EXTERNAL_AWS_SDK,
   LAMBDA_ESBUILD_TARGET,
   LAMBDA_RUNTIME,
@@ -70,6 +77,8 @@ export interface SvelteAppProps {
 
 export class SvelteApp extends Construct {
   private readonly stackProps: SvelteAppProps;
+  public readonly appUrl: string;
+  public readonly cloudFrontUrl: string;
 
   //   public readonly appUrl: string;
   //   public readonly cloudFrontUrl: string;
@@ -97,7 +106,16 @@ export class SvelteApp extends Construct {
       (stackProps.domain && stackProps.domain.name) || undefined
     );
 
-    this.createSvelteServer(serverPath);
+    const api = this.createSvelteServer(serverPath);
+    const cloudfrontDistribution = this.createCloudFrontDistribution(
+      staticAssetsBucket,
+      api
+    );
+
+    this.cloudFrontUrl = `https://${cloudfrontDistribution.domainName}`;
+    this.appUrl =
+      (this.stackProps.domain && `https://${this.stackProps.domain.name}`) ||
+      this.cloudFrontUrl;
   }
 
   private createStaticAssetsBucket(clientPath: string, bucketName?: string) {
@@ -123,6 +141,14 @@ export class SvelteApp extends Construct {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
+    const svelteKitLayer = new NpmLayerVersion(this, "SvelteKitLambdaLayer", {
+      layerPath: path.resolve(__dirname, "../layers/svelte-kit-layer"),
+      layerVersionProps: {
+        compatibleArchitectures: [LAMBDA_ARCHITECTURE],
+        compatibleRuntimes: [LAMBDA_RUNTIME],
+      },
+    });
+
     const serverLambda = new lambdaNode.NodejsFunction(
       this,
       "SvelteServerLambda",
@@ -134,18 +160,37 @@ export class SvelteApp extends Construct {
             }
           : undefined,
         runtime: LAMBDA_RUNTIME,
+        architecture: LAMBDA_ARCHITECTURE,
         timeout: cdk.Duration.seconds(29),
         memorySize: 512,
         entry: path.resolve(__dirname, "svelte-server-handler.js"),
         environment: this.stackProps.svelteServerEnvironment,
+        layers: [svelteKitLayer.layerVersion],
+        // layers: [serverLambdaLayer],
         bundling: {
+          format: lambdaNode.OutputFormat.ESM,
           minify: false,
           target: LAMBDA_ESBUILD_TARGET,
           externalModules: [
             LAMBDA_ESBUILD_EXTERNAL_AWS_SDK,
-            "./server.js",
-            "./server/manifest.js",
+            "./server/index.js",
+            "./server/manifest-full.js",
+            ...svelteKitLayer.packagedDependencies,
           ],
+          commandHooks: {
+            afterBundling(inputDir: string, outputDir: string): string[] {
+              return [
+                `echo "{\\"type\\": \\"module\\"}" > ${outputDir}/package.json`,
+                `cp -r ${serverPath} ${outputDir}/server`,
+              ];
+            },
+            beforeBundling(inputDir: string, outputDir: string): string[] {
+              return [];
+            },
+            beforeInstall(inputDir: string, outputDir: string): string[] {
+              return [];
+            },
+          },
         },
       }
     );
@@ -162,5 +207,106 @@ export class SvelteApp extends Construct {
       methods: [apigw.HttpMethod.GET],
       integration: serverLambdaIntegration,
     });
+
+    return api;
+  }
+
+  private createCloudFrontDistribution(
+    staticAssetsBucket: s3.Bucket,
+    api: apigw.HttpApi
+  ) {
+    const staticOrigin = new cfo.S3Origin(staticAssetsBucket);
+
+    const apiDomain = `${api.apiId}.execute-api.${
+      cdk.Stack.of(this).region
+    }.amazonaws.com`;
+
+    const svelteServerOrigin = new cfo.HttpOrigin(`${apiDomain}`, {
+      protocolPolicy: cf.OriginProtocolPolicy.HTTPS_ONLY,
+    });
+
+    const certificate =
+      this.stackProps.domain &&
+      cm.Certificate.fromCertificateArn(
+        this,
+        "SvelteAppCertificate",
+        this.stackProps.domain.domainCertificateArn
+      );
+
+    const domainNames = this.stackProps.domain
+      ? [this.stackProps.domain.name, ...(this.stackProps.domain.aliases || [])]
+      : undefined;
+
+    const svelteServerCachePolicy = new cf.CachePolicy(
+      this,
+      "SvelteServerCachePolicy",
+      {
+        comment: "SvelteKit Server optimized",
+        queryStringBehavior: cf.CacheQueryStringBehavior.none(),
+        cookieBehavior: cf.CacheCookieBehavior.none(),
+        headerBehavior: cf.CacheHeaderBehavior.allowList(
+          "Accept-Language",
+          ...(this.stackProps.allowedCacheHeaders || [])
+        ),
+        enableAcceptEncodingGzip: true,
+        enableAcceptEncodingBrotli: true,
+        defaultTtl: cdk.Duration.days(365),
+      }
+    );
+
+    const cloudfrontDistribution = new cf.Distribution(
+      this,
+      "SvelteCloudfrontDistribution",
+      {
+        domainNames,
+        certificate,
+        priceClass: cf.PriceClass.PRICE_CLASS_100,
+        httpVersion: cf.HttpVersion.HTTP2,
+        minimumProtocolVersion: cf.SecurityPolicyProtocol.TLS_V1_2_2021,
+        defaultBehavior: {
+          origin: svelteServerOrigin,
+          viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          cachePolicy: svelteServerCachePolicy,
+        },
+        additionalBehaviors: {
+          "/_app/*": {
+            origin: staticOrigin,
+            cachePolicy: cf.CachePolicy.CACHING_OPTIMIZED,
+            viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          },
+          "/favicon.ico": {
+            origin: staticOrigin,
+            cachePolicy: cf.CachePolicy.CACHING_DISABLED,
+            viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          },
+          "/logo192.png": {
+            origin: staticOrigin,
+            cachePolicy: cf.CachePolicy.CACHING_DISABLED,
+            viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          },
+          "/manifest.json": {
+            origin: staticOrigin,
+            cachePolicy: cf.CachePolicy.CACHING_DISABLED,
+            viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          },
+          "/robot.txt": {
+            origin: staticOrigin,
+            cachePolicy: cf.CachePolicy.CACHING_DISABLED,
+            viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          },
+        },
+      }
+    );
+
+    this.stackProps.domain &&
+      new r53.ARecord(this, `${this.stackProps.domain.name}_Alias}`, {
+        recordName: this.stackProps.domain.name,
+        target: r53.RecordTarget.fromAlias(
+          new r53t.CloudFrontTarget(cloudfrontDistribution)
+        ),
+        zone: this.stackProps.domain.hostedZone,
+      });
+
+    return cloudfrontDistribution;
   }
 }

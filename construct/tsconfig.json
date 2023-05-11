@@ -3,7 +3,7 @@
     "rootDir": "src",
     "outDir": "lib",
     "incremental": true,
-    "lib": ["ES2021"],
+    "lib": ["ES2021","DOM"],
     "module": "ES2022",
     "target": "ES2021",
     "moduleResolution": "nodenext",
