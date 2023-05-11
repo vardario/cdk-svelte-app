@@ -1,0 +1,16 @@
+{
+  "name": "root",
+  "version": "1.0.0",
+  "description": "",  
+  "private": true,
+  "scripts": {
+    "build":"pnpm --filter @vardario/cdk-svelte-app run build && pnpm -r build "
+  },  
+  "author": "Sahin Vardar",
+  "license": "MIT",
+  "packageManager": "pnpm@8.3.1",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:vardario/cdk-svelte-app.git"
+  }  
+}
