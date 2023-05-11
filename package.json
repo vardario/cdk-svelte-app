@@ -1,0 +1,11 @@
+{
+  "name": "@vardario/cdk-svelte-app",
+  "version": "1.0.0",
+  "description": "",  
+  "private": true,
+  "scripts": {  
+  },  
+  "author": "Sahin Vardar",
+  "license": "MIT",
+  "packageManager": "pnpm@8.3.1"
+}

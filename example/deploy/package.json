@@ -1,0 +1,28 @@
+{
+  "name": "deploy",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "deploy": "bin/deploy.js"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "cdk-deploy": "cdk deploy --outputs-file ./cdk.outputs.json",
+    "cdk-destroy": "cdk destroy",
+    "cdk-synth": "cdk synth"
+  },
+  "devDependencies": {
+    "@types/node": "20.1.2",
+    "@vardario/cdk-svelte-app": "workspace:*",
+    "aws-cdk": "^2.78.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.78.0",
+    "constructs": "^10.2.17",
+    "source-map-support": "^0.5.21",
+    "esbuild": "^0.17.17"
+  },
+  "private": true
+}
