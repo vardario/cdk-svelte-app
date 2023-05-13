@@ -25,8 +25,6 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     url += queryString;
   }
 
-  console.log(url);
-
   const response = await server.respond(
     new Request(url, {
       method: event.requestContext.http.method,
