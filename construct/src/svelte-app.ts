@@ -13,7 +13,7 @@ import * as cf from "aws-cdk-lib/aws-cloudfront";
 import * as cm from "aws-cdk-lib/aws-certificatemanager";
 import * as r53t from "aws-cdk-lib/aws-route53-targets";
 import { NpmLayerVersion } from "@apimda/npm-layer-version";
-import { hashElement } from "folder-hash";
+import os from "node:os";
 
 import {
   LAMBDA_ARCHITECTURE,
@@ -90,6 +90,10 @@ export class SvelteApp extends Construct {
     this.stackProps = stackProps;
 
     const svelteKitPath = path.resolve(stackProps.svelteAppPath, ".svelte-kit");
+    const packageJsonPath = path.resolve(
+      stackProps.svelteAppPath,
+      "package.json"
+    );
     const svelteOutput = path.resolve(svelteKitPath, "output");
 
     if (!fs.existsSync(svelteOutput)) {
@@ -108,7 +112,7 @@ export class SvelteApp extends Construct {
       (stackProps.domain && stackProps.domain.name) || undefined
     );
 
-    const api = this.createSvelteServer(serverPath);
+    const api = this.createSvelteServer(serverPath, packageJsonPath);
     const cloudfrontDistribution = this.createCloudFrontDistribution(
       staticAssetsBucket,
       api,
@@ -140,9 +144,22 @@ export class SvelteApp extends Construct {
     return staticAssetsBucket;
   }
 
-  private createSvelteServer(serverPath: string) {
+  private createSvelteServer(serverPath: string, packageJsonPath: string) {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
+
+    const packageJson = JSON.parse(
+      fs.readFileSync(packageJsonPath).toString("utf-8")
+    );
+
+    const svelteAppDepsDir = fs.mkdtempSync(
+      path.resolve(os.tmpdir(), "svelte-app")
+    );
+    fs.mkdirSync(path.resolve(svelteAppDepsDir, "nodejs"));
+    fs.copyFileSync(
+      packageJsonPath,
+      path.resolve(svelteAppDepsDir, "nodejs/package.json")
+    );
 
     const svelteKitLayer = new NpmLayerVersion(this, "SvelteKitLambdaLayer", {
       layerPath: path.resolve(__dirname, "../layers/svelte-kit-layer"),
@@ -151,6 +168,25 @@ export class SvelteApp extends Construct {
         compatibleRuntimes: [LAMBDA_RUNTIME],
       },
     });
+
+    const svelteAppDepsLayer =
+      (packageJson.dependencies !== undefined &&
+        new NpmLayerVersion(this, "SvelteAppDepsLayer", {
+          layerPath: svelteAppDepsDir,
+          layerVersionProps: {
+            compatibleArchitectures: [LAMBDA_ARCHITECTURE],
+            compatibleRuntimes: [LAMBDA_RUNTIME],
+          },
+        })) ||
+      undefined;
+
+    const layers = [svelteKitLayer.layerVersion];
+    const packagedDependencies = [...svelteKitLayer.packagedDependencies];
+
+    if (svelteAppDepsLayer) {
+      layers.push(svelteAppDepsLayer.layerVersion);
+      packagedDependencies.push(...svelteAppDepsLayer.packagedDependencies);
+    }
 
     const serverLambda = new lambdaNode.NodejsFunction(
       this,
@@ -168,8 +204,7 @@ export class SvelteApp extends Construct {
         memorySize: 512,
         entry: path.resolve(__dirname, "svelte-server-handler.js"),
         environment: this.stackProps.svelteServerEnvironment,
-        layers: [svelteKitLayer.layerVersion],
-        // layers: [serverLambdaLayer],
+        layers,
         bundling: {
           format: lambdaNode.OutputFormat.ESM,
           minify: false,
@@ -178,7 +213,7 @@ export class SvelteApp extends Construct {
             LAMBDA_ESBUILD_EXTERNAL_AWS_SDK,
             "./server/index.js",
             "./server/manifest-full.js",
-            ...svelteKitLayer.packagedDependencies,
+            ...packagedDependencies,
           ],
           commandHooks: {
             afterBundling(inputDir: string, outputDir: string): string[] {

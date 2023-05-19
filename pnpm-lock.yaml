@@ -67,6 +67,10 @@ importers:
         version: 5.0.2
 
   example/svelte-app:
+    dependencies:
+      '@apimda/client':
+        specifier: ^0.0.4
+        version: 0.0.4
     devDependencies:
       '@fontsource/fira-mono':
         specifier: ^4.5.10
@@ -103,6 +107,16 @@ importers:
         version: 4.3.0
 
 packages:
+
+  /@apimda/client@0.0.4:
+    resolution: {integrity: sha512-RuGtEVD/dZblgk36E87jTKclKkIFw+FcrC8eca440kKnNPN1XVOy78UnhgjMtBNiHVEFM+yRU01IT9UMFuN0BQ==}
+    dependencies:
+      '@apimda/core': 0.0.4
+    dev: false
+
+  /@apimda/core@0.0.4:
+    resolution: {integrity: sha512-6ZLjkLEuO/ZkX7do85O1huIBxtB8jihWTfOz5cXVOMMWmJ5OQOrabAh4Pvw1kBPtCWyd/e+0OaccmjP0GyfqVA==}
+    dev: false
 
   /@apimda/npm-layer-version@1.0.0:
     resolution: {integrity: sha512-zgytKThT6SlYJZiuEfxcw8yrTBrTJRuFrEkT+QU/ryadF9LW7797hyRZJPTg/COAk8Q8M00gBSnO1+7mb7x7bw==}
