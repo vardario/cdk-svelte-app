@@ -7,6 +7,7 @@ import * as cdk from "aws-cdk-lib";
 import fs from "fs";
 import * as apigw from "@aws-cdk/aws-apigatewayv2-alpha";
 import * as lambdaNode from "aws-cdk-lib/aws-lambda-nodejs";
+import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigwInt from "@aws-cdk/aws-apigatewayv2-integrations-alpha";
 import * as cfo from "aws-cdk-lib/aws-cloudfront-origins";
 import * as cf from "aws-cdk-lib/aws-cloudfront";
@@ -90,10 +91,6 @@ export class SvelteApp extends Construct {
     this.stackProps = stackProps;
 
     const svelteKitPath = path.resolve(stackProps.svelteAppPath, ".svelte-kit");
-    const packageJsonPath = path.resolve(
-      stackProps.svelteAppPath,
-      "package.json"
-    );
     const svelteOutput = path.resolve(svelteKitPath, "output");
 
     if (!fs.existsSync(svelteOutput)) {
@@ -112,7 +109,7 @@ export class SvelteApp extends Construct {
       (stackProps.domain && stackProps.domain.name) || undefined
     );
 
-    const api = this.createSvelteServer(serverPath, packageJsonPath);
+    const api = this.createSvelteServer(serverPath);
     const cloudfrontDistribution = this.createCloudFrontDistribution(
       staticAssetsBucket,
       api,
@@ -144,22 +141,19 @@ export class SvelteApp extends Construct {
     return staticAssetsBucket;
   }
 
-  private createSvelteServer(serverPath: string, packageJsonPath: string) {
+  private createSvelteServer(serverPath: string) {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
     const packageJson = JSON.parse(
-      fs.readFileSync(packageJsonPath).toString("utf-8")
+      fs
+        .readFileSync(
+          path.resolve(this.stackProps.svelteAppPath, "package.json")
+        )
+        .toString("utf-8")
     );
 
-    const svelteAppDepsDir = fs.mkdtempSync(
-      path.resolve(os.tmpdir(), "svelte-app")
-    );
-    fs.mkdirSync(path.resolve(svelteAppDepsDir, "nodejs"));
-    fs.copyFileSync(
-      packageJsonPath,
-      path.resolve(svelteAppDepsDir, "nodejs/package.json")
-    );
+    const appDependencies = Object.keys(packageJson.dependencies || {});
 
     const svelteKitLayer = new NpmLayerVersion(this, "SvelteKitLambdaLayer", {
       layerPath: path.resolve(__dirname, "../layers/svelte-kit-layer"),
@@ -169,24 +163,20 @@ export class SvelteApp extends Construct {
       },
     });
 
-    const svelteAppDepsLayer =
-      (packageJson.dependencies !== undefined &&
-        new NpmLayerVersion(this, "SvelteAppDepsLayer", {
-          layerPath: svelteAppDepsDir,
-          layerVersionProps: {
-            compatibleArchitectures: [LAMBDA_ARCHITECTURE],
-            compatibleRuntimes: [LAMBDA_RUNTIME],
-          },
-        })) ||
-      undefined;
+    const appLayer = new lambda.LayerVersion(this, "SvelteKitAppLayer", {
+      code: lambda.Code.fromAsset(
+        path.resolve(this.stackProps.svelteAppPath, "node_modules"),
+        {
+          followSymlinks: cdk.SymlinkFollowMode.ALWAYS,
+        }
+      ),
+    });
 
-    const layers = [svelteKitLayer.layerVersion];
-    const packagedDependencies = [...svelteKitLayer.packagedDependencies];
-
-    if (svelteAppDepsLayer) {
-      layers.push(svelteAppDepsLayer.layerVersion);
-      packagedDependencies.push(...svelteAppDepsLayer.packagedDependencies);
-    }
+    const layers = [svelteKitLayer.layerVersion, appLayer];
+    const packagedDependencies = [
+      ...svelteKitLayer.packagedDependencies,
+      ...appDependencies,
+    ];
 
     const serverLambda = new lambdaNode.NodejsFunction(
       this,
