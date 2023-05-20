@@ -145,6 +145,14 @@ export class SvelteApp extends Construct {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
+    const svelteKitLayer = new NpmLayerVersion(this, "SvelteKitLambdaLayer", {
+      layerPath: path.resolve(__dirname, "../layers/svelte-kit-layer"),
+      layerVersionProps: {
+        compatibleArchitectures: [LAMBDA_ARCHITECTURE],
+        compatibleRuntimes: [LAMBDA_RUNTIME],
+      },
+    });
+
     const packageJson = JSON.parse(
       fs
         .readFileSync(
@@ -155,21 +163,20 @@ export class SvelteApp extends Construct {
 
     const appDependencies = Object.keys(packageJson.dependencies || {});
 
-    const svelteKitLayer = new NpmLayerVersion(this, "SvelteKitLambdaLayer", {
-      layerPath: path.resolve(__dirname, "../layers/svelte-kit-layer"),
-      layerVersionProps: {
-        compatibleArchitectures: [LAMBDA_ARCHITECTURE],
-        compatibleRuntimes: [LAMBDA_RUNTIME],
-      },
-    });
+    const svelteAppDepsDir = fs.mkdtempSync(
+      path.resolve(os.tmpdir(), "svelte-app")
+    );
+
+    fs.mkdirSync(path.resolve(svelteAppDepsDir, "node_modules"));
+
+    fs.cpSync(
+      path.resolve(this.stackProps.svelteAppPath, "node_modules"),
+      path.resolve(svelteAppDepsDir, "node_modules"),
+      { recursive: true, dereference: true }
+    );
 
     const appLayer = new lambda.LayerVersion(this, "SvelteKitAppLayer", {
-      code: lambda.Code.fromAsset(
-        path.resolve(this.stackProps.svelteAppPath, "node_modules"),
-        {
-          followSymlinks: cdk.SymlinkFollowMode.ALWAYS,
-        }
-      ),
+      code: lambda.Code.fromAsset(svelteAppDepsDir),
     });
 
     const layers = [svelteKitLayer.layerVersion, appLayer];
