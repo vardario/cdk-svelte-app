@@ -53,7 +53,16 @@ export interface SvelteAppDomain {
 }
 
 export interface SvelteAppProps {
+  /**
+   * Path to svelte app project.
+   */
   svelteAppPath: string;
+
+  /**
+   * Path to a @NpmLayerVersion compatible directory,
+   * which includes a package.json file with all needed packages.
+   */
+  svelteAppLayerPath?: string;
 
   /**
    * When defined, a custom domain will be attached to the
@@ -146,44 +155,14 @@ export class SvelteApp extends Construct {
     const __dirname = path.dirname(__filename);
 
     const svelteKitLayer = new NpmLayerVersion(this, "SvelteKitLambdaLayer", {
-      layerPath: path.resolve(__dirname, "../layers/svelte-kit-layer"),
+      layerPath:
+        this.stackProps.svelteAppLayerPath ??
+        path.resolve(__dirname, "../layers/svelte-kit-layer"),
       layerVersionProps: {
         compatibleArchitectures: [LAMBDA_ARCHITECTURE],
         compatibleRuntimes: [LAMBDA_RUNTIME],
       },
     });
-
-    const packageJson = JSON.parse(
-      fs
-        .readFileSync(
-          path.resolve(this.stackProps.svelteAppPath, "package.json")
-        )
-        .toString("utf-8")
-    );
-
-    const appDependencies = Object.keys(packageJson.dependencies || {});
-
-    const svelteAppDepsDir = fs.mkdtempSync(
-      path.resolve(os.tmpdir(), "svelte-app")
-    );
-
-    fs.mkdirSync(path.resolve(svelteAppDepsDir, "node_modules"));
-
-    fs.cpSync(
-      path.resolve(this.stackProps.svelteAppPath, "node_modules"),
-      path.resolve(svelteAppDepsDir, "node_modules"),
-      { recursive: true, dereference: true }
-    );
-
-    const appLayer = new lambda.LayerVersion(this, "SvelteKitAppLayer", {
-      code: lambda.Code.fromAsset(svelteAppDepsDir),
-    });
-
-    const layers = [svelteKitLayer.layerVersion, appLayer];
-    const packagedDependencies = [
-      ...svelteKitLayer.packagedDependencies,
-      ...appDependencies,
-    ];
 
     const serverLambda = new lambdaNode.NodejsFunction(
       this,
@@ -201,7 +180,7 @@ export class SvelteApp extends Construct {
         memorySize: 512,
         entry: path.resolve(__dirname, "svelte-server-handler.js"),
         environment: this.stackProps.svelteServerEnvironment,
-        layers,
+        layers: [svelteKitLayer.layerVersion],
         bundling: {
           format: lambdaNode.OutputFormat.ESM,
           minify: false,
@@ -210,7 +189,7 @@ export class SvelteApp extends Construct {
             LAMBDA_ESBUILD_EXTERNAL_AWS_SDK,
             "./server/index.js",
             "./server/manifest-full.js",
-            ...packagedDependencies,
+            ...svelteKitLayer.packagedDependencies,
           ],
           commandHooks: {
             afterBundling(inputDir: string, outputDir: string): string[] {
