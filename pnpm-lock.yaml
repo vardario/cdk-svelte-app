@@ -10,10 +10,10 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       '@aws-cdk/aws-apigatewayv2-alpha':
-        specifier: 2.79.0-alpha.0
+        specifier: ^2.79.0-alpha.0
         version: 2.79.0-alpha.0(aws-cdk-lib@2.79.0)(constructs@10.2.19)
       '@aws-cdk/aws-apigatewayv2-integrations-alpha':
-        specifier: 2.79.0-alpha.0
+        specifier: ^2.79.0-alpha.0
         version: 2.79.0-alpha.0(@aws-cdk/aws-apigatewayv2-alpha@2.79.0-alpha.0)(aws-cdk-lib@2.79.0)(constructs@10.2.19)
       aws-cdk-lib:
         specifier: ^2.79.0
