@@ -1,6 +1,6 @@
 {
   "name": "@vardario/cdk-svelte-app",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "",
   "main": "lib/index.js",
   "type": "module",
@@ -10,15 +10,20 @@
   },
   "author": "Sahin Vardar",
   "license": "MIT",
-  "packageManager": "pnpm@8.3.1",
-  "dependencies": {
+  "packageManager": "pnpm@8.6.0",
+  "peerDependencies": {
     "@apimda/npm-layer-version": "^1.0.0",
+    "constructs": "^10.2.19",
+    "@aws-cdk/aws-apigatewayv2-alpha": "^2.79.0-alpha.0",
+    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.79.0-alpha.0",
+    "aws-cdk-lib": "^2.79.0"
+  },
+  "devDependencies": {
+    "@apimda/npm-layer-version": "^1.0.0",
+    "constructs": "^10.2.19",
     "@aws-cdk/aws-apigatewayv2-alpha": "^2.79.0-alpha.0",
     "@aws-cdk/aws-apigatewayv2-integrations-alpha": "^2.79.0-alpha.0",
     "aws-cdk-lib": "^2.79.0",
-    "constructs": "^10.2.19"
-  },
-  "devDependencies": {
     "@types/aws-lambda": "^8.10.115",
     "@types/folder-hash": "^4.0.2",
     "@types/node": "^20.1.2",
