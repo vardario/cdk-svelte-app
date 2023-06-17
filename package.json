@@ -1,6 +1,6 @@
 {
   "name": "root",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "",
   "private": true,
   "scripts": {
@@ -8,7 +8,7 @@
   },
   "author": "Sahin Vardar",
   "license": "MIT",
-  "packageManager": "pnpm@8.3.1",
+  "packageManager": "pnpm@8.6.0",
   "repository": {
     "type": "git",
     "url": "git@github.com:vardario/cdk-svelte-app.git"
