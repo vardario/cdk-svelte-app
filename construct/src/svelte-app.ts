@@ -289,6 +289,11 @@ export class SvelteApp extends Construct {
             cachePolicy: cf.CachePolicy.CACHING_OPTIMIZED,
             viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           },
+           "/assets/*": {
+            origin: staticOrigin,
+            cachePolicy: cf.CachePolicy.CACHING_OPTIMIZED,
+            viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          },
           "/favicon.ico": {
             origin: staticOrigin,
             cachePolicy: cf.CachePolicy.CACHING_DISABLED,
