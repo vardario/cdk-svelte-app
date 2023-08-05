@@ -1,10 +1,11 @@
 {
   "name": "root",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "",
   "private": true,
   "scripts": {
-    "build": "pnpm --filter @vardario/cdk-svelte-app run build && pnpm -r build "
+    "build": "pnpm --filter @vardario/cdk-svelte-app run build && pnpm -r build",
+    "repo-clean": "git clean -xdf -e .env"
   },
   "author": "Sahin Vardar",
   "license": "MIT",
