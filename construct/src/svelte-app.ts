@@ -27,7 +27,7 @@ import { fileURLToPath } from "url";
 
 export interface SvelteAppDomain {
   /**
-   * Fully qualified domain name under which the NextJS  will be available.
+   * Fully qualified domain name under which the svelte app  will be available.
    */
   name: string;
 
@@ -222,6 +222,12 @@ export class SvelteApp extends Construct {
       integration: serverLambdaIntegration,
     });
 
+    api.addRoutes({
+      path: "/{proxy+}",
+      methods: [apigw.HttpMethod.POST],
+      integration: serverLambdaIntegration,
+    });
+
     return api;
   }
 
@@ -282,6 +288,7 @@ export class SvelteApp extends Construct {
           origin: svelteServerOrigin,
           viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: svelteServerCachePolicy,
+          allowedMethods: cf.AllowedMethods.ALLOW_ALL,
         },
         additionalBehaviors: {
           "/_app/*": {
@@ -289,7 +296,7 @@ export class SvelteApp extends Construct {
             cachePolicy: cf.CachePolicy.CACHING_OPTIMIZED,
             viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           },
-           "/assets/*": {
+          "/assets/*": {
             origin: staticOrigin,
             cachePolicy: cf.CachePolicy.CACHING_OPTIMIZED,
             viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
