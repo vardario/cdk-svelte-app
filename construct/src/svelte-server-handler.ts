@@ -25,6 +25,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     url += queryString;
   }
 
+  if (event.cookies) {
+    event.headers["cookie"] = event.cookies.join("; ");
+  }
+
   const response = await server.respond(
     new Request(url, {
       method: event.requestContext.http.method,
@@ -44,6 +48,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   response.headers.forEach((value, key) => {
     headers[key] = value;
   });
+
+  if (response.status >= 300 && response.status <= 399) {
+    headers["cache-control"] = "no-cache";
+  }
 
   return {
     statusCode: response.status,
