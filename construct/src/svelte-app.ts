@@ -340,7 +340,7 @@ export class SvelteApp extends Construct {
     });
 
     this.stackProps.domain &&
-      new r53.ARecord(this, `${this.stackProps.domain.name}_Alias}`, {
+      new r53.ARecord(this, 'SvelteAlias', {
         recordName: this.stackProps.domain.name,
         target: r53.RecordTarget.fromAlias(
           new r53t.CloudFrontTarget(cloudfrontDistribution)
