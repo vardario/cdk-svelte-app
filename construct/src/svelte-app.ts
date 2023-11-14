@@ -91,6 +91,7 @@ export class SvelteApp extends Construct {
   private readonly stackProps: SvelteAppProps;
   public readonly appUrl: string;
   public readonly cloudFrontUrl: string;
+  public readonly cloudfrontDistribution: cf.Distribution;
 
   //   public readonly appUrl: string;
   //   public readonly cloudFrontUrl: string;
@@ -119,13 +120,13 @@ export class SvelteApp extends Construct {
     );
 
     const api = this.createSvelteServer(serverPath);
-    const cloudfrontDistribution = this.createCloudFrontDistribution(
+    this.cloudfrontDistribution = this.createCloudFrontDistribution(
       staticAssetsBucket,
       api,
       buildId
     );
 
-    this.cloudFrontUrl = `https://${cloudfrontDistribution.domainName}`;
+    this.cloudFrontUrl = `https://${this.cloudfrontDistribution.domainName}`;
     this.appUrl =
       (this.stackProps.domain && `https://${this.stackProps.domain.name}`) ||
       this.cloudFrontUrl;
@@ -340,7 +341,7 @@ export class SvelteApp extends Construct {
     });
 
     this.stackProps.domain &&
-      new r53.ARecord(this, 'SvelteAlias', {
+      new r53.ARecord(this, "SvelteAlias", {
         recordName: `${this.stackProps.domain.name}.`,
         target: r53.RecordTarget.fromAlias(
           new r53t.CloudFrontTarget(cloudfrontDistribution)
