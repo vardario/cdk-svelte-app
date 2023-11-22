@@ -1,15 +1,34 @@
 {
-  "name": "root",
-  "version": "0.1.14",
-  "description": "",
-  "private": true,
+  "name": "@vardario/cdk-svelte-app",
+  "version": "0.0.0-development",
+  "description": "cdk construct to deploy a svelte app to aws",
+  "main": "lib/index.js",
+  "type": "module",
   "scripts": {
-    "build": "pnpm --filter @vardario/cdk-svelte-app run build && pnpm -r build",
-    "repo-clean": "git clean -xdf -e .env"
+    "build": "tsc --build",
+    "watch": "tsc --build --watch"
   },
   "author": "Sahin Vardar",
   "license": "MIT",
   "packageManager": "pnpm@8.6.0",
+  "peerDependencies": {
+    "@apimda/npm-layer-version": "1.x",
+    "@aws-cdk/aws-apigatewayv2-alpha": "2.x",
+    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "2.x",
+    "aws-cdk-lib": "2.x",
+    "constructs": "10.x"
+  },
+  "devDependencies": {
+    "@apimda/npm-layer-version": "^1.0.0",
+    "@aws-cdk/aws-apigatewayv2-alpha": "2.110.1-alpha.0",
+    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "2.110.1-alpha.0",
+    "@types/aws-lambda": "^8.10.115",
+    "@types/folder-hash": "^4.0.2",
+    "@types/node": "^20.1.2",
+    "aws-cdk-lib": "^2.78.0",
+    "constructs": "^10.2.17",
+    "typescript": "^5.0.0"
+  },
   "repository": {
     "type": "git",
     "url": "git@github.com:vardario/cdk-svelte-app.git"
