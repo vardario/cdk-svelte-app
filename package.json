@@ -7,11 +7,14 @@
   "scripts": {
     "build": "tsc --build",
     "watch": "tsc --build --watch",
-    "repo-clean": "git clean -xdf -e .env"
+    "repo-clean": "git clean -xdf -e .env",
+    "semantic-release": "semantic-release",
+    "format": "prettier --plugin-search-dir . --write . && prettier-package-json --write && eslint --fix ."
   },
+  "files": ["lib"],
   "author": "Sahin Vardar",
   "license": "MIT",
-  "packageManager": "pnpm@8.6.0",
+  "packageManager": "pnpm@8.10.5",
   "peerDependencies": {
     "@apimda/npm-layer-version": "1.x",
     "@aws-cdk/aws-apigatewayv2-alpha": "2.x",
@@ -20,18 +23,34 @@
     "constructs": "10.x"
   },
   "devDependencies": {
+    "eslint-plugin-typescript-sort-keys": "^3.1.0",
     "@apimda/npm-layer-version": "^1.0.0",
     "@aws-cdk/aws-apigatewayv2-alpha": "2.110.1-alpha.0",
     "@aws-cdk/aws-apigatewayv2-integrations-alpha": "2.110.1-alpha.0",
-    "@types/aws-lambda": "^8.10.115",
-    "@types/folder-hash": "^4.0.2",
-    "@types/node": "^20.1.2",
+    "@types/aws-lambda": "^8.10.128",
+    "@types/folder-hash": "^4.0.4",
+    "@types/node": "^20.9.4",
     "aws-cdk-lib": "^2.110.1",
     "constructs": "^10.3.0",
+    "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-unused-imports": "^3.0.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.1.0",
+    "prettier": "^3.1.0",
+    "prettier-package-json": "^2.8.0",
+    "semantic-release": "^22.0.8",
     "typescript": "^5.3.2"
   },
   "repository": {
     "type": "git",
     "url": "git@github.com:vardario/cdk-svelte-app.git"
-  }
+  },
+  "lint-staged": {
+    "*": [
+      "prettier --write --ignore-unknown",
+      "eslint --fix"
+    ],
+    "package.json": "prettier-package-json --write"
+  },
 }
