@@ -1,6 +1,11 @@
 module.exports = {
-  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier', 'plugin:typescript-sort-keys/recommended'],
-  plugins: ['@typescript-eslint', 'unused-imports','typescript-sort-keys'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'prettier',
+    'plugin:typescript-sort-keys/recommended'
+  ],
+  plugins: ['@typescript-eslint', 'unused-imports', 'typescript-sort-keys'],
   ignorePatterns: [
     '*.cjs',
     'jest.*.ts',
