@@ -52,7 +52,12 @@ export interface SvelteAppDomain {
 
 export interface SvelteAppProps {
   /**
-   * TODO:
+   * Here you can define additional paths which should be cached by CloudFront.
+   */
+  additionalCachingPaths?: string[];
+
+  /**
+   * allowedCacheHeaders
    */
   allowedCacheHeaders?: string[];
 
@@ -64,7 +69,7 @@ export interface SvelteAppProps {
   domain?: SvelteAppDomain;
 
   /**
-   * TODO:
+   * Provisioned concurrent executions for the svelte server lambda.
    */
   provisionedConcurrentExecutions?: number;
 
@@ -240,6 +245,47 @@ export class SvelteApp extends Construct {
       defaultTtl: cdk.Duration.days(365)
     });
 
+    const additionalBehaviors: Record<string, cf.BehaviorOptions> = {
+      '/_app/*': {
+        origin: staticOrigin,
+        cachePolicy: cf.CachePolicy.CACHING_OPTIMIZED,
+        viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+      },
+      '/favicon.ico': {
+        origin: staticOrigin,
+        cachePolicy: cf.CachePolicy.CACHING_DISABLED,
+        viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+      },
+      '/favicon.png': {
+        origin: staticOrigin,
+        cachePolicy: cf.CachePolicy.CACHING_DISABLED,
+        viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+      },
+      '/logo192.png': {
+        origin: staticOrigin,
+        cachePolicy: cf.CachePolicy.CACHING_DISABLED,
+        viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+      },
+      '/manifest.json': {
+        origin: staticOrigin,
+        cachePolicy: cf.CachePolicy.CACHING_DISABLED,
+        viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+      },
+      '/robot.txt': {
+        origin: staticOrigin,
+        cachePolicy: cf.CachePolicy.CACHING_DISABLED,
+        viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+      }
+    };
+
+    this.stackProps.additionalCachingPaths?.forEach(path => {
+      additionalBehaviors[path] = {
+        origin: staticOrigin,
+        cachePolicy: cf.CachePolicy.CACHING_OPTIMIZED,
+        viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+      };
+    });
+
     const cloudfrontDistribution = new cf.Distribution(this, 'SvelteCloudfrontDistribution', {
       domainNames,
       certificate,
@@ -252,43 +298,7 @@ export class SvelteApp extends Construct {
         cachePolicy: svelteServerCachePolicy,
         allowedMethods: cf.AllowedMethods.ALLOW_ALL
       },
-      additionalBehaviors: {
-        '/_app/*': {
-          origin: staticOrigin,
-          cachePolicy: cf.CachePolicy.CACHING_OPTIMIZED,
-          viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
-        },
-        '/assets/*': {
-          origin: staticOrigin,
-          cachePolicy: cf.CachePolicy.CACHING_OPTIMIZED,
-          viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
-        },
-        '/favicon.ico': {
-          origin: staticOrigin,
-          cachePolicy: cf.CachePolicy.CACHING_DISABLED,
-          viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
-        },
-        '/favicon.png': {
-          origin: staticOrigin,
-          cachePolicy: cf.CachePolicy.CACHING_DISABLED,
-          viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
-        },
-        '/logo192.png': {
-          origin: staticOrigin,
-          cachePolicy: cf.CachePolicy.CACHING_DISABLED,
-          viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
-        },
-        '/manifest.json': {
-          origin: staticOrigin,
-          cachePolicy: cf.CachePolicy.CACHING_DISABLED,
-          viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
-        },
-        '/robot.txt': {
-          origin: staticOrigin,
-          cachePolicy: cf.CachePolicy.CACHING_DISABLED,
-          viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
-        }
-      }
+      additionalBehaviors
     });
 
     new s3d.BucketDeployment(this, 'SvelteInvalidationDeployment', {
