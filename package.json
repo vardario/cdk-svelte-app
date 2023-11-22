@@ -1,17 +1,72 @@
 {
-  "name": "root",
-  "version": "0.1.14",
-  "description": "",
-  "private": true,
-  "scripts": {
-    "build": "pnpm --filter @vardario/cdk-svelte-app run build && pnpm -r build",
-    "repo-clean": "git clean -xdf -e .env"
-  },
-  "author": "Sahin Vardar",
+  "name": "@vardario/cdk-svelte-app",
+  "version": "0.0.0-development",
+  "description": "cdk construct to deploy a svelte app to aws",
   "license": "MIT",
-  "packageManager": "pnpm@8.6.0",
+  "author": "Sahin Vardar",
   "repository": {
     "type": "git",
     "url": "git@github.com:vardario/cdk-svelte-app.git"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "layers",
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "format": "prettier --plugin-search-dir . --write . && prettier-package-json --write && eslint --fix .",
+    "prepare": "husky install",
+    "repo-clean": "git clean -xdf -e .env",
+    "semantic-release": "semantic-release",
+    "test": "vitest run --passWithNoTests",
+    "watch": "tsc --build --watch"
+  },
+  "peerDependencies": {
+    "@apimda/npm-layer-version": "1.x",
+    "@aws-cdk/aws-apigatewayv2-alpha": "2.x",
+    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "2.x",
+    "aws-cdk-lib": "2.x",
+    "constructs": "10.x"
+  },
+  "devDependencies": {
+    "@apimda/npm-layer-version": "^1.0.0",
+    "@aws-cdk/aws-apigatewayv2-alpha": "2.110.1-alpha.0",
+    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "2.110.1-alpha.0",
+    "@sveltejs/kit": "^1.5.0",
+    "@types/aws-lambda": "^8.10.128",
+    "@types/folder-hash": "^4.0.4",
+    "@types/node": "^20.9.4",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "aws-cdk-lib": "^2.110.1",
+    "constructs": "^10.3.0",
+    "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-typescript-sort-keys": "^3.1.0",
+    "eslint-plugin-unused-imports": "^3.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.1.0",
+    "prettier": "^3.1.0",
+    "prettier-package-json": "^2.8.0",
+    "semantic-release": "^22.0.8",
+    "typescript": "5.3.2",
+    "vitest": "^0.34.6"
+  },
+  "lint-staged": {
+    "*": [
+      "prettier --write --ignore-unknown",
+      "eslint --fix"
+    ],
+    "package.json": "prettier-package-json --write"
+  },
+  "packageManager": "pnpm@8.10.5",
+  "pnpm": {
+    "overrides": {
+      "typescript": "$typescript",
+      "aws-cdk-lib": "$aws-cdk-lib",
+      "constructs": "$constructs",
+      "@types/node": "$@types/node"
+    }
   }
 }
