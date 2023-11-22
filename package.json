@@ -56,5 +56,13 @@
     ],
     "package.json": "prettier-package-json --write"
   },
-  "packageManager": "pnpm@8.10.5"
+  "packageManager": "pnpm@8.10.5",
+  "pnpm": {
+    "overrides": {
+      "typescript": "$typescript",
+      "aws-cdk-lib": "$aws-cdk-lib",
+      "constructs": "$constructs",
+      "@types/node": "$@types/node"
+    }
+  }
 }
