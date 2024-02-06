@@ -29,14 +29,3 @@ function findInDir(dir: string, fileList: string[] = []) {
 
   return fileList;
 }
-
-export function hashFolder(path: string, algorithm: string = 'md5') {
-  const files = findInDir(path);
-  const hasher = crypto.createHash(algorithm);
-
-  files.forEach(file => {
-    hasher.update(fs.readFileSync(file));
-  });
-
-  return hasher.digest('hex');
-}
