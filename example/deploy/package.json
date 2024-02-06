@@ -1,4 +1,5 @@
 {
+  "private": true,
   "name": "deploy",
   "version": "0.1.14",
   "type": "module",
@@ -15,12 +16,12 @@
     "@types/node": "*",
     "@vardario/cdk-svelte-app": "workspace:*",
     "aws-cdk": "*",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.0.0",
     "aws-cdk-lib": "*",
     "constructs": "*",
+    "esbuild": "^0.17.17",
     "source-map-support": "^0.5.21",
-    "esbuild": "^0.17.17"
-  },
-  "private": true
+    "ts-node": "^10.9.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.0.0"
+  }
 }

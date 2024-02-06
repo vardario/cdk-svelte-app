@@ -18,8 +18,7 @@ import {
   LAMBDA_ARCHITECTURE,
   LAMBDA_ESBUILD_EXTERNAL_AWS_SDK,
   LAMBDA_ESBUILD_TARGET,
-  LAMBDA_RUNTIME,
-  hashFolder
+  LAMBDA_RUNTIME
 } from './stack-utils.js';
 import { fileURLToPath } from 'url';
 
@@ -96,9 +95,6 @@ export class SvelteApp extends Construct {
   public readonly cloudFrontUrl: string;
   public readonly cloudfrontDistribution: cf.Distribution;
 
-  //   public readonly appUrl: string;
-  //   public readonly cloudFrontUrl: string;
-
   constructor(scope: Construct, id: string, stackProps: SvelteAppProps) {
     super(scope, id);
     this.stackProps = stackProps;
@@ -113,15 +109,13 @@ export class SvelteApp extends Construct {
     const serverPath = path.resolve(svelteOutput, 'server');
     const clientPath = path.resolve(svelteOutput, 'client');
 
-    const buildId = `${hashFolder(serverPath)}:${hashFolder(clientPath)}`;
-
     const staticAssetsBucket = this.createStaticAssetsBucket(
       clientPath,
       (stackProps.domain && stackProps.domain.name) || undefined
     );
 
     const api = this.createSvelteServer(serverPath);
-    this.cloudfrontDistribution = this.createCloudFrontDistribution(staticAssetsBucket, api, buildId);
+    this.cloudfrontDistribution = this.createCloudFrontDistribution(staticAssetsBucket, api);
 
     this.cloudFrontUrl = `https://${this.cloudfrontDistribution.domainName}`;
     this.appUrl = (this.stackProps.domain && `https://${this.stackProps.domain.name}`) || this.cloudFrontUrl;
@@ -215,9 +209,8 @@ export class SvelteApp extends Construct {
     return api;
   }
 
-  private createCloudFrontDistribution(staticAssetsBucket: s3.Bucket, api: apigw.HttpApi, buildId: string) {
+  private createCloudFrontDistribution(staticAssetsBucket: s3.Bucket, api: apigw.HttpApi) {
     const staticOrigin = new cfo.S3Origin(staticAssetsBucket);
-
     const apiDomain = `${api.apiId}.execute-api.${cdk.Stack.of(this).region}.amazonaws.com`;
 
     const svelteServerOrigin = new cfo.HttpOrigin(`${apiDomain}`, {
@@ -299,15 +292,6 @@ export class SvelteApp extends Construct {
         allowedMethods: cf.AllowedMethods.ALLOW_ALL
       },
       additionalBehaviors
-    });
-
-    new s3d.BucketDeployment(this, 'SvelteInvalidationDeployment', {
-      destinationBucket: staticAssetsBucket,
-      destinationKeyPrefix: '/',
-      sources: [s3d.Source.data('BUILD_ID', buildId)],
-      prune: false,
-      distribution: cloudfrontDistribution,
-      distributionPaths: ['/*']
     });
 
     this.stackProps.domain &&
