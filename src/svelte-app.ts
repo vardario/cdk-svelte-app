@@ -162,17 +162,11 @@ export class SvelteApp extends Construct {
       memorySize: 512,
       entry: path.resolve(__dirname, 'svelte-server-handler.js'),
       environment: this.stackProps.svelteServerEnvironment,
-      layers: [svelteKitLayer.layerVersion],
       bundling: {
         format: lambdaNode.OutputFormat.ESM,
         minify: false,
         target: LAMBDA_ESBUILD_TARGET,
-        externalModules: [
-          LAMBDA_ESBUILD_EXTERNAL_AWS_SDK,
-          './server/index.js',
-          './server/manifest-full.js',
-          ...svelteKitLayer.packagedDependencies
-        ],
+        externalModules: [LAMBDA_ESBUILD_EXTERNAL_AWS_SDK, './server/index.js', './server/manifest-full.js'],
         commandHooks: {
           afterBundling(inputDir: string, outputDir: string): string[] {
             return [

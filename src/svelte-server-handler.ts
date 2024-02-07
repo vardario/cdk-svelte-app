@@ -1,55 +1,57 @@
-import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
-import { Server } from './server/index.js';
-import { manifest } from './server/manifest-full.js';
+import { APIGatewayProxyEventV2, APIGatewayProxyHandlerV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
+import path from 'node:path';
+import type { Server } from 'server';
 import { installPolyfills } from '@sveltejs/kit/node/polyfills';
 
 installPolyfills();
 
-const server = new Server(manifest);
-await server.init({ env: process.env });
+export type Handler = (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyStructuredResultV2>;
 
-export const handler: APIGatewayProxyHandlerV2 = async event => {
-  const origin = event.headers.origin || `https://${event.requestContext.domainName}`;
+export function createSvelteServerHandler(serverDir: string): Handler {
+  return async event => {
+    const { Server } = await import(path.resolve(serverDir, 'index.js'));
+    const { manifest } = await import(path.resolve(serverDir, 'manifest.js'));
+    const server = new Server(manifest) as Server;
+    await server.init({ env: process.env });
 
-  const encoding = event.isBase64Encoded ? 'base64' : 'utf-8';
-  const body = event.body ? Buffer.from(event.body, encoding) : undefined;
-  const queryString = event.rawQueryString ? `?${event.rawQueryString}` : undefined;
-  let url = `${origin}${event.requestContext.http.path}`;
+    const origin = event.headers.origin || `https://${event.requestContext.domainName}`;
 
-  if (queryString) {
-    url += queryString;
-  }
+    const encoding = event.isBase64Encoded ? 'base64' : 'utf-8';
+    const body = event.body ? Buffer.from(event.body, encoding) : undefined;
+    const queryString = event.rawQueryString ? `?${event.rawQueryString}` : undefined;
+    const url = `${origin}${event.requestContext.http.path}${queryString ?? ''}`;
 
-  if (event.cookies) {
-    event.headers['cookie'] = event.cookies.join('; ');
-  }
+    console.log('url:', url);
 
-  const response = await server.respond(
-    new Request(url, {
-      method: event.requestContext.http.method,
-      headers: new Headers((event.headers as Record<string, string>) || {}),
-      body
-    }),
-    {
-      getClientAddress() {
-        return event.requestContext.http.sourceIp;
-      }
+    if (event.cookies) {
+      event.headers['cookie'] = event.cookies.join('; ');
     }
-  );
 
-  const headers: Record<string, string> = {};
+    const response = await server.respond(
+      new Request(url, {
+        method: event.requestContext.http.method,
+        headers: new Headers((event.headers as Record<string, string>) || {}),
+        body
+      }),
+      {
+        getClientAddress() {
+          return event.requestContext.http.sourceIp;
+        }
+      }
+    );
 
-  response.headers.forEach((value, key) => {
-    headers[key] = value;
-  });
+    const headers: Record<string, string> = {};
 
-  if (response.status >= 300 && response.status <= 399) {
-    headers['cache-control'] = 'no-cache';
-  }
+    response.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
 
-  return {
-    statusCode: response.status,
-    body: await response.text(),
-    headers
+    return {
+      statusCode: response.status,
+      body: await response.text(),
+      headers
+    };
   };
-};
+}
+
+export const handler: APIGatewayProxyHandlerV2 = await createSvelteServerHandler('/opt/server');
