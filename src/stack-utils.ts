@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'path';
 
-export const LAMBDA_RUNTIME = lambda.Runtime.NODEJS_18_X;
+export const LAMBDA_RUNTIME = lambda.Runtime.NODEJS_20_X;
 export const LAMBDA_ARCHITECTURE = lambda.Architecture.ARM_64;
 export const LAMBDA_ESBUILD_TARGET = 'node18';
 export const LAMBDA_ESBUILD_EXTERNAL_AWS_SDK = '@aws-sdk/*';

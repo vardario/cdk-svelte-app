@@ -16,30 +16,26 @@
   ],
   "scripts": {
     "build": "tsc --build",
+    "build:example": "pnpm --filter svelte-app build",
     "format": "prettier --plugin-search-dir . --write . && prettier-package-json --write && eslint --fix .",
     "prepare": "husky install",
     "repo-clean": "git clean -xdf -e .env",
     "semantic-release": "semantic-release",
-    "test": "vitest run --passWithNoTests",
+    "test": "pnpm build:example &&  vitest run",
     "watch": "tsc --build --watch"
   },
   "peerDependencies": {
-    "@apimda/npm-layer-version": "1.x",
-    "@aws-cdk/aws-apigatewayv2-alpha": "2.x",
-    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "2.x",
-    "aws-cdk-lib": "2.x",
+    "aws-cdk-lib": ">= 2.115.0",
     "constructs": "10.x"
   },
   "devDependencies": {
-    "@apimda/npm-layer-version": "^1.0.0",
-    "@aws-cdk/aws-apigatewayv2-alpha": "2.110.1-alpha.0",
-    "@aws-cdk/aws-apigatewayv2-integrations-alpha": "2.110.1-alpha.0",
     "@sveltejs/kit": "^1.5.0",
     "@types/aws-lambda": "^8.10.128",
     "@types/folder-hash": "^4.0.4",
     "@types/node": "^20.9.4",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
-    "aws-cdk-lib": "^2.110.1",
+    "aws-cdk": "^2.126.0",
+    "aws-cdk-lib": "^2.126.0",
     "constructs": "^10.3.0",
     "eslint": "^8.54.0",
     "eslint-config-prettier": "^9.0.0",
@@ -63,6 +59,7 @@
   "packageManager": "pnpm@8.10.5",
   "pnpm": {
     "overrides": {
+      "aws-cdk": "$aws-cdk-lib",
       "typescript": "$typescript",
       "aws-cdk-lib": "$aws-cdk-lib",
       "constructs": "$constructs",
