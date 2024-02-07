@@ -10,7 +10,7 @@ export type Handler = (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxy
 export function createSvelteServerHandler(serverDir: string): Handler {
   return async event => {
     const { Server } = await import(path.resolve(serverDir, 'index.js'));
-    const { manifest } = await import(path.resolve(serverDir, 'manifest.js'));
+    const { manifest } = await import(path.resolve(serverDir, 'manifest-full.js'));
     const server = new Server(manifest) as Server;
     await server.init({ env: process.env });
 
@@ -21,24 +21,22 @@ export function createSvelteServerHandler(serverDir: string): Handler {
     const queryString = event.rawQueryString ? `?${event.rawQueryString}` : undefined;
     const url = `${origin}${event.requestContext.http.path}${queryString ?? ''}`;
 
-    console.log('url:', url);
-
     if (event.cookies) {
       event.headers['cookie'] = event.cookies.join('; ');
     }
 
-    const response = await server.respond(
-      new Request(url, {
-        method: event.requestContext.http.method,
-        headers: new Headers((event.headers as Record<string, string>) || {}),
-        body
-      }),
-      {
-        getClientAddress() {
-          return event.requestContext.http.sourceIp;
-        }
+    const req = new Request(url, {
+      method: event.requestContext.http.method,
+      headers: new Headers((event.headers as Record<string, string>) || {}),
+      body
+    });
+
+    const response = await server.respond(req, {
+      platform: { req },
+      getClientAddress() {
+        return event.requestContext.http.sourceIp;
       }
-    );
+    });
 
     const headers: Record<string, string> = {};
 
@@ -54,4 +52,4 @@ export function createSvelteServerHandler(serverDir: string): Handler {
   };
 }
 
-export const handler: APIGatewayProxyHandlerV2 = await createSvelteServerHandler('/opt/server');
+export const handler: APIGatewayProxyHandlerV2 = createSvelteServerHandler('./server');

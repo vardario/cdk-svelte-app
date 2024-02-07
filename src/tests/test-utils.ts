@@ -1,6 +1,10 @@
 import { APIGatewayProxyEventV2 } from 'aws-lambda';
 
-export function createAwsProxyEvent(path: string, method: string): APIGatewayProxyEventV2 {
+export function createAwsProxyEvent(
+  path: string,
+  method: string,
+  override?: Partial<APIGatewayProxyEventV2>
+): APIGatewayProxyEventV2 {
   return {
     version: '2.0',
     routeKey: '$default',
@@ -9,7 +13,8 @@ export function createAwsProxyEvent(path: string, method: string): APIGatewayPro
     cookies: ['cookie1', 'cookie2'],
     headers: {
       Header1: 'value1',
-      Header2: 'value1,value2'
+      Header2: 'value1,value2',
+      origin: 'https://localhost'
     },
     queryStringParameters: {},
     requestContext: {
@@ -47,6 +52,7 @@ export function createAwsProxyEvent(path: string, method: string): APIGatewayPro
     stageVariables: {
       stageVariable1: 'value1',
       stageVariable2: 'value2'
-    }
+    },
+    ...override
   };
 }
