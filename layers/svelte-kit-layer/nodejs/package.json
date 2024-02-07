@@ -1,7 +1,0 @@
-{
-  "name": "svelte-kit-layer",
-  "version": "1.0.0",
-  "dependencies": {
-    "@sveltejs/kit": "^1.16.3"
-  }
-}
