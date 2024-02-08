@@ -14,6 +14,9 @@ overrides:
 importers:
   .:
     devDependencies:
+      '@apimda/npm-layer-version':
+        specifier: ^1.1.0
+        version: 1.1.0(aws-cdk-lib@2.126.0)(constructs@10.3.0)
       '@sveltejs/kit':
         specifier: ^1.5.0
         version: 1.27.6(svelte@3.59.2)(vite@4.5.0)
@@ -163,6 +166,18 @@ packages:
     resolution:
       { integrity: sha512-6ZLjkLEuO/ZkX7do85O1huIBxtB8jihWTfOz5cXVOMMWmJ5OQOrabAh4Pvw1kBPtCWyd/e+0OaccmjP0GyfqVA== }
     dev: false
+
+  /@apimda/npm-layer-version@1.1.0(aws-cdk-lib@2.126.0)(constructs@10.3.0):
+    resolution:
+      { integrity: sha512-EhMttTGT7+b9fKrdvkG+ZcDCG5Nspys76EiVJLksJ0TLJ8I+eqYz5G5f+8Vez/vvvkbWDCagmtVM6bwUS5Rr1w== }
+    requiresBuild: true
+    peerDependencies:
+      aws-cdk-lib: ^2.126.0
+      constructs: ^10.3.0
+    dependencies:
+      aws-cdk-lib: 2.126.0(constructs@10.3.0)
+      constructs: 10.3.0
+    dev: true
 
   /@aws-cdk/asset-awscli-v1@2.2.202:
     resolution:
