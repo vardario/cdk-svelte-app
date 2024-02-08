@@ -17,6 +17,9 @@
   "scripts": {
     "build": "tsc --build",
     "build:example": "pnpm --filter svelte-app build",
+    "cdk-deploy": "pnpm --filter deploy cdk-deploy",
+    "cdk-destroy": "pnpm --filter deploy cdk-destroy",
+    "cdk-synth": "pnpm --filter deploy cdk-synth",
     "format": "prettier --plugin-search-dir . --write . && prettier-package-json --write && eslint --fix .",
     "prepare": "husky install",
     "repo-clean": "git clean -xdf -e .env",
@@ -25,10 +28,12 @@
     "watch": "tsc --build --watch"
   },
   "peerDependencies": {
+    "@apimda/npm-layer-version": ">= 1.1.0",
     "aws-cdk-lib": ">= 2.115.0",
     "constructs": "10.x"
   },
   "devDependencies": {
+    "@apimda/npm-layer-version": "^1.1.0",
     "@sveltejs/kit": "^1.5.0",
     "@types/aws-lambda": "^8.10.128",
     "@types/folder-hash": "^4.0.4",

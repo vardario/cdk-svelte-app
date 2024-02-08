@@ -12,6 +12,7 @@ import * as cfo from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as cf from 'aws-cdk-lib/aws-cloudfront';
 import * as cm from 'aws-cdk-lib/aws-certificatemanager';
 import * as r53t from 'aws-cdk-lib/aws-route53-targets';
+import { NpmLayerVersion } from '@apimda/npm-layer-version';
 
 import {
   LAMBDA_ARCHITECTURE,
@@ -141,6 +142,14 @@ export class SvelteApp extends Construct {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
+    const svelteKitLayer = new NpmLayerVersion(this, 'SvelteKitLambdaLayer', {
+      layerPath: this.stackProps.svelteAppLayerPath ?? path.resolve(__dirname, '../layers/svelte-kit-layer'),
+      layerVersionProps: {
+        compatibleArchitectures: [LAMBDA_ARCHITECTURE],
+        compatibleRuntimes: [LAMBDA_RUNTIME]
+      }
+    });
+
     const serverLambda = new lambdaNode.NodejsFunction(this, 'SvelteServerLambda', {
       currentVersionOptions: this.stackProps.provisionedConcurrentExecutions
         ? {
@@ -153,12 +162,12 @@ export class SvelteApp extends Construct {
       memorySize: 512,
       entry: path.resolve(__dirname, 'svelte-server-handler.js'),
       environment: this.stackProps.svelteServerEnvironment,
+      layers: [svelteKitLayer.layerVersion],
       bundling: {
-        nodeModules: ['@sveltejs/kit'],
         format: lambdaNode.OutputFormat.ESM,
         minify: false,
         target: LAMBDA_ESBUILD_TARGET,
-        externalModules: [LAMBDA_ESBUILD_EXTERNAL_AWS_SDK],
+        externalModules: [LAMBDA_ESBUILD_EXTERNAL_AWS_SDK, ...svelteKitLayer.packagedDependencies],
         commandHooks: {
           afterBundling(inputDir: string, outputDir: string): string[] {
             return [
